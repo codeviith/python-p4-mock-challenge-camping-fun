@@ -18,52 +18,68 @@ db = SQLAlchemy(metadata=metadata)
 
 
 class Activity(db.Model, SerializerMixin):
-    __tablename__ = 'activities'
+    __tablename__ = 'activities_table'
+
+    serialize_rules = ("-signups.activity",)
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
     difficulty = db.Column(db.Integer)
 
-    # Add relationship
-    
-    # Add serialization rules
-    
+    signups = db.relationship("Signup", back_populates="activity", cascade="all, delete-orphan")
+
+
     def __repr__(self):
         return f'<Activity {self.id}: {self.name}>'
 
 
-class Camper(db.Model, SerializerMixin):
-    __tablename__ = 'campers'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, nullable=False)
-    age = db.Column(db.Integer)
-
-    # Add relationship
-    
-    # Add serialization rules
-    
-    # Add validation
-    
-    
-    def __repr__(self):
-        return f'<Camper {self.id}: {self.name}>'
-
-
 class Signup(db.Model, SerializerMixin):
-    __tablename__ = 'signups'
+    __tablename__ = 'signups_table'
+
+    serialize_rules = ("-activity.signups","-camper.signups")
 
     id = db.Column(db.Integer, primary_key=True)
     time = db.Column(db.Integer)
+    activity_id = db.Column(db.Integer, db.ForeignKey("activities_table.id"))
+    camper_id = db.Column(db.Integer, db.ForeignKey("campers_table.id"))
 
-    # Add relationships
+    activity = db.relationship("Activity", back_populates="signups")
+    camper = db.relationship("Camper", back_populates="signups")
+
+
+    @validates('time')
+    def validate_time(self, key, time):
+        if 0 <= time <= 23:
+            return time
+        else:
+            raise ValueError ("Time to complete signup must be within 23 minutes.")
     
-    # Add serialization rules
-    
-    # Add validation
-    
+
     def __repr__(self):
         return f'<Signup {self.id}>'
 
 
-# add any models you may need.
+class Camper(db.Model, SerializerMixin):
+    __tablename__ = 'campers_table'
+
+    serialize_rules = ("-signups.camper",)
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False) ### nullable = false is validating that the name cannot be empty.
+    age = db.Column(db.Integer)
+
+    signups = db.relationship("Signup", back_populates="camper")
+
+
+    @validates('age')
+    def validate_age(self, key, age):
+        if 8 <= age <= 18:
+            return age
+        else:
+            raise ValueError ("Signup age must be between 8 and 18.")
+
+
+    def __repr__(self):
+        return f'<Camper {self.id}: {self.name}>'
+
+
