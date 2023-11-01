@@ -46,7 +46,7 @@ def get_post_all_camper():
                 age=data.get('age')
             )
         except Exception:
-            return ({"error": "Cannot create new camper."}, 405)
+            return ({"Error": "Cannot create new camper!"}, 405)
         
         db.session.add(new_camper)
         db.session.commit()
@@ -59,7 +59,7 @@ def get_patch_camper_by_id(id):
     camper = Camper.query.filter(Camper.id == id).first()
 
     if not camper:
-        return {"error": "Camper not found."}, 404
+        return {"Error": "Camper not found!"}, 404
     
     if request.method == 'GET':
         return make_response(camper.to_dict(), 200)
@@ -70,9 +70,12 @@ def get_patch_camper_by_id(id):
             try:
                 setattr(camper, key, data[key])
             except ValueError as e: ### "as e" is to set the ValueError into the 'e' variable.
-                return {"errors": [str(e)]}, 400 ### str(e) is what converts the e variable to
+                return {"Error": [str(e)]}, 400 ### str(e) is what converts the e variable to
                                                  ### a string so we can see what the error is.
                                                     ### but why is in in brackets???
+                                                    ### --> the bracket is list notation, so if
+                                                    ### you have more than one errors to log, that's
+                                                    ### what it's for.
         db.session.add(camper)
         db.session.commit()
 
@@ -88,12 +91,12 @@ def activity_by_id(id):
     activity = Activity.query.filter( Activity.id == id).first()
 
     if not activity:
-        return {"error": "Activity not found."}, 404
+        return {"Error": "Activity not found!"}, 404
     
     db.session.delete(activity)
     db.session.commit()
 
-    return {"message": "Activity deleted."}, 200
+    return {"Message": "Activity deleted!"}, 200
 
 @app.post('/signups')
 def post_all_signups():
@@ -105,8 +108,8 @@ def post_all_signups():
             camper_id = data.get('camper_id'),
             activity_id = data.get('activity_id')
         )
-    except ValueError:
-        return {"errors": "Cannot create new signup."}, 405
+    except ValueError as e:
+        return {"Error": str(e)}, 405
     
     db.session.add(new_signup)
     db.session.commit()
